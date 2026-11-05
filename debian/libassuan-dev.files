@@ -1,0 +1,4 @@
+usr/include/assuan.h
+usr/lib/libassuan.dylib
+usr/lib/pkgconfig/libassuan.pc
+usr/share/aclocal/libassuan.m4

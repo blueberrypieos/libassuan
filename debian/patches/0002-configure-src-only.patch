@@ -1,0 +1,168 @@
+Description: Only what the Darwin library needs is configured and built
+ The packages ship only the library, its header, pkg-config file and
+ autoconf macro. Without doc/ and tests/ in configure.ac and SUBDIRS,
+ automake does not read the manual or the test makefiles. The doc switch
+ goes with doc/. Without src/versioninfo.rc and src/libassuan-config,
+ configure does not read their templates. m4/Makefile only lists the
+ macros for make dist, so it is not configured. In foreign mode automake
+ needs no AUTHORS, ChangeLog, INSTALL, NEWS, README or COPYING. AB_INIT
+ only logs build details, so autobuild.m4 is not used.
+ .
+ assuan.h is made from the posix-*.inc.h parts only, as mkheader does for
+ Darwin. libSystem has funopen, isascii, stpcpy and setenv, so they are
+ checked for but have no replacement sources. memrchr keeps its
+ replacement.
+Author: The Blueberry Pie OS Authors
+Forwarded: not-needed
+Last-Update: 2026-11-04
+---
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -16,6 +16,10 @@
+ # You should have received a copy of the GNU Lesser General Public
+ # License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ # SPDX-License-Identifier: LGPL-2.1+
++#
++# Modified 2026-11-03: doc/ and tests/ are not built (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: the doc switch is removed (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: m4/ is not a subdirectory (LGPL-2.1 section 2(b)).
+ ## Process this file with automake to produce Makefile.in
+ 
+ # Location of the released tarball archives.  This is prefixed by the
+@@ -41,13 +45,7 @@
+              tests/ChangeLog-2011 build-aux/libtool-patch.sed     \
+              build-aux/git-log-footer build-aux/git-log-fix
+ 
+-if BUILD_DOC
+-doc = doc
+-else
+-doc =
+-endif
+-
+-SUBDIRS = m4 src $(doc) tests
++SUBDIRS = src
+ 
+ 
+ dist-hook: gen-ChangeLog
+--- a/configure.ac
++++ b/configure.ac
+@@ -20,6 +20,14 @@
+ # SPDX-License-Identifier: LGPL-2.1+
+ #
+ # Modified 2026-11-03: the version list is the release's, not git's (LGPL-2.1 section 2(b)).
++# Modified 2026-11-03: doc/ and tests/ are not configured (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: automake runs in foreign mode (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: the Windows version resource is not configured (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: the doc switch is removed (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: the autobuild macros are not used (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: funopen, isascii, stpcpy and setenv have no replacement sources (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: libassuan-config is not made (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: m4/Makefile is not configured (LGPL-2.1 section 2(b)).
+ 
+ # Process this file with autoconf to produce a configure script.
+ 
+@@ -77,14 +85,13 @@
+ AC_SUBST(LIBASSUAN_LT_REVISION)
+ 
+ AC_CONFIG_AUX_DIR([build-aux])
+-AM_INIT_AUTOMAKE([serial-tests dist-bzip2 no-dist-gzip])
++AM_INIT_AUTOMAKE([foreign serial-tests dist-bzip2 no-dist-gzip])
+ AM_MAINTAINER_MODE
+ AC_CONFIG_SRCDIR(src/assuan.h.in)
+ AC_CONFIG_MACRO_DIR(m4)
+ AC_CONFIG_HEADERS([config.h])
+ AC_CANONICAL_HOST
+ AM_SILENT_RULES
+-AB_INIT
+ 
+ AC_USE_SYSTEM_EXTENSIONS
+ 
+@@ -441,7 +448,7 @@
+     # No funopen but we can implement that in terms of fopencookie.
+     AC_CHECK_FUNCS(fopencookie)
+     if test $ac_cv_func_fopencookie = yes; then
+-        AC_LIBOBJ([funopen])
++        :
+     else
+         AC_MSG_WARN([
+ ***
+@@ -453,11 +460,11 @@
+ fi
+ 
+ 
+-AC_REPLACE_FUNCS(isascii)
++AC_CHECK_FUNCS(isascii)
+ AC_REPLACE_FUNCS(memrchr)
+-AC_REPLACE_FUNCS(stpcpy)
++AC_CHECK_FUNCS(stpcpy)
+ AC_CHECK_HEADERS(unistd.h)
+-AC_REPLACE_FUNCS(setenv)
++AC_CHECK_FUNCS(setenv)
+ 
+ 
+ #
+@@ -482,25 +489,10 @@
+ 
+ 
+ #
+-# Extra features
+-#
+-build_doc=yes
+-AC_ARG_ENABLE([doc], AS_HELP_STRING([--disable-doc],
+-                                    [do not build the documentation]),
+-                     build_doc=$enableval, build_doc=yes)
+-AM_CONDITIONAL([BUILD_DOC], [test "x$build_doc" != xno])
+-
+-
+-#
+ # Create the config files.
+ #
+ AC_CONFIG_FILES([Makefile])
+-AC_CONFIG_FILES([m4/Makefile])
+ AC_CONFIG_FILES([src/Makefile])
+-AC_CONFIG_FILES([doc/Makefile])
+-AC_CONFIG_FILES([tests/Makefile])
+-AC_CONFIG_FILES([src/libassuan-config], [chmod +x src/libassuan-config])
+-AC_CONFIG_FILES([src/versioninfo.rc])
+ AC_CONFIG_FILES([src/libassuan.pc])
+ 
+ AC_OUTPUT
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -17,6 +17,9 @@
+ # License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ #
+ # SPDX-License-Identifier: LGPL-2.1+
++#
++# Modified 2026-11-04: assuan.h has only the posix parts (LGPL-2.1 section 2(b)).
++# Modified 2026-11-04: libassuan-config is not made (LGPL-2.1 section 2(b)).
+ ## Process this file with automake to produce Makefile.in
+ 
+ pkgconfigdir = $(libdir)/pkgconfig
+@@ -27,11 +30,6 @@
+              libassuan.pc.in
+ AM_CPPFLAGS = -I..
+ 
+-if USE_GPGRT_CONFIG
+-noinst_SCRIPTS = libassuan-config
+-else
+-bin_SCRIPTS = libassuan-config
+-endif
+ m4datadir = $(datadir)/aclocal
+ m4data_DATA = libassuan.m4
+ lib_LTLIBRARIES = libassuan.la
+@@ -48,10 +46,10 @@
+ BUILT_SOURCES = assuan.h
+ 
+ parts_of_assuan_h = \
+-	posix-includes.inc.h   w32-includes.inc.h \
+-	posix-types.inc.h      w32-types.inc.h \
+-	posix-fd-t.inc.h       w32-fd-t.inc.h \
+-	posix-sock-nonce.inc.h w32-sock-nonce.inc.h
++	posix-includes.inc.h \
++	posix-types.inc.h \
++	posix-fd-t.inc.h \
++	posix-sock-nonce.inc.h
+ 
+ common_sources = \
+ 	assuan.h.in $(parts_of_assuan_h) \

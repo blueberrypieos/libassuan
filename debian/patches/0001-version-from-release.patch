@@ -1,0 +1,30 @@
+Description: The version list is the release's
+ configure.ac takes the version from ./autogen.sh --find-version, which
+ asks git. Outside git it gives 3.0.2-unknown as a beta, and the source
+ package has neither .git nor autogen.sh. The list is the one git gives
+ at the tag.
+Author: The Blueberry Pie OS Authors
+Forwarded: not-needed
+Last-Update: 2026-11-04
+---
+--- a/configure.ac
++++ b/configure.ac
+@@ -18,6 +18,8 @@
+ # You should have received a copy of the GNU Lesser General Public
+ # License along with this program; if not, see <http://www.gnu.org/licenses/>.
+ # SPDX-License-Identifier: LGPL-2.1+
++#
++# Modified 2026-11-03: the version list is the release's, not git's (LGPL-2.1 section 2(b)).
+ 
+ # Process this file with autoconf to produce a configure script.
+ 
+@@ -45,8 +47,7 @@
+ # the decimalized short revision number, a beta version string and a
+ # flag indicating a development version (mym4_isbeta).  Note that the
+ # m4 processing is done by autoconf and not during the configure run.
+-m4_define([mym4_verslist], m4_split(m4_esyscmd([./autogen.sh --find-version] \
+-                           mym4_package mym4_major mym4_minor mym4_micro),[:]))
++m4_define([mym4_verslist], m4_split([libassuan-3.0.2:no:yes:3.0.2:3.0.2::0f84595:3972:0f84595a4bc706d3afb969d59618244c7db3b59f:],[:]))
+ m4_define([mym4_isbeta],       m4_argn(2, mym4_verslist))
+ m4_define([mym4_version],      m4_argn(4, mym4_verslist))
+ m4_define([mym4_revision],     m4_argn(7, mym4_verslist))
